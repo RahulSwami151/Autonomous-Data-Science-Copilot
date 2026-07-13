@@ -143,11 +143,26 @@ def call_llm_for_code(client: OpenAI, prompt: str) -> str:
 # --------------------------------------------------------------------------
 # Sandbox execution
 # --------------------------------------------------------------------------
+ALLOWED_IMPORT_ROOTS = {"pandas", "numpy", "matplotlib", "seaborn"}
+
+
+def _restricted_import(name, globals=None, locals=None, fromlist=(), level=0):
+    """The LLM's generated code often re-imports pandas/numpy/matplotlib/seaborn even though
+    they're already injected into the namespace. Python's `import` statement always calls
+    __builtins__['__import__'], so without this, EVERY generated import statement raises
+    ImportError: __import__ not found — before the actual analysis code ever runs.
+    This restricted version allows only the four safe data-science libraries."""
+    root = name.split(".")[0]
+    if root not in ALLOWED_IMPORT_ROOTS:
+        raise ImportError(f"Import of '{name}' is not permitted inside the sandbox.")
+    return __import__(name, globals, locals, fromlist, level)
+
+
 SAFE_BUILTINS = {
     "range": range, "len": len, "min": min, "max": max, "sum": sum, "sorted": sorted,
     "list": list, "dict": dict, "set": set, "tuple": tuple, "str": str, "int": int,
     "float": float, "bool": bool, "enumerate": enumerate, "zip": zip, "round": round,
-    "print": print, "abs": abs,
+    "print": print, "abs": abs, "__import__": _restricted_import,
 }
 
 

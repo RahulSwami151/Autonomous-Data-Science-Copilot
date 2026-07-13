@@ -251,10 +251,26 @@ def autonomous_analyze(client, df, question, data_profile, max_retries=MAX_SELF_
 st.title("🤖 Autonomous Data Science Co-Pilot")
 st.caption("Upload data, ask a question in plain English — the agent writes, runs, and self-heals its own code.")
 
+def get_secret_api_key() -> str:
+    """Reads OPENROUTER_API_KEY from Streamlit secrets if configured. Returns "" if not set —
+    st.secrets raises if no secrets.toml exists at all, so this must be wrapped in try/except."""
+    try:
+        return st.secrets.get("OPENROUTER_API_KEY", "")
+    except Exception:
+        return ""
+
 with st.sidebar:
     st.header("Setup")
-    api_key = st.text_input("OpenRouter API Key", type="password", help="Free, no card needed — sign up at openrouter.ai")
-    st.markdown("Your key is only used for this session and is never stored.")
+    secret_key = get_secret_api_key()
+    if secret_key:
+        st.success("Using API key from app secrets.")
+        api_key = st.text_input(
+            "OpenRouter API Key (override)", type="password",
+            help="Leave blank to use the key configured in Secrets.",
+        ) or secret_key
+    else:
+        api_key = st.text_input("OpenRouter API Key", type="password", help="Free, no card needed — sign up at openrouter.ai")
+        st.markdown("Your key is only used for this session and is never stored.")
     st.caption("Free tier: 20 requests/min, 50/day. Get a key at [openrouter.ai](https://openrouter.ai).")
 
 uploaded_file = st.file_uploader("Upload a data file", type=["csv", "xlsx", "xls", "json"])

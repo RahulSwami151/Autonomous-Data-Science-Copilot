@@ -21,8 +21,9 @@ don't import from each other.
 ## How it works
 
 1. **Load** — reads CSV / Excel / JSON into a pandas DataFrame and profiles its schema.
-2. **Generate** — an LLM (OpenAI GPT-4o-mini by default) writes Python/Pandas/Matplotlib code
-   to answer the user's question, given the data profile.
+2. **Generate** — an LLM (via [OpenRouter](https://openrouter.ai)'s free tier by default, using
+   the OpenAI SDK with a swapped `base_url`) writes Python/Pandas/Matplotlib code to answer the
+   user's question, given the data profile.
 3. **Execute** — the code runs in a restricted namespace (limited builtins, no file/network access
    from inside the generated code).
 4. **Self-heal (RAG)** — if execution fails, the agent live-searches `docs.python.org` and
@@ -34,9 +35,14 @@ don't import from each other.
 
 ## Setup
 
+### Get a free API key
+Both the notebook and the app use [OpenRouter](https://openrouter.ai), which offers a free tier
+(no credit card required): sign up, go to **Settings → API Keys**, and generate a key. Free tier
+limits are 20 requests/minute and 50/day — plenty for prototyping and demos.
+
 ### Notebook (Google Colab)
 1. Open `Autonomous_DataScience_Copilot.ipynb` in Colab.
-2. Run cells top to bottom. Cell 3 will prompt for your OpenAI API key (not stored in the notebook).
+2. Run cells top to bottom. Cell 3 will prompt for your OpenRouter API key (not stored in the notebook).
 3. Cell 4 opens a file picker — upload your CSV/Excel/JSON.
 4. Cell 12 runs a sample question; edit the question string to try your own.
 
@@ -45,14 +51,14 @@ don't import from each other.
 pip install -r requirements.txt
 streamlit run app.py
 ```
-Enter your OpenAI API key in the sidebar, upload a file, type a question, click **Analyze**.
+Enter your OpenRouter API key in the sidebar, upload a file, type a question, click **Analyze**.
 
 ### Deploying to a public webpage
 1. Push this repo to GitHub.
 2. Go to [share.streamlit.io](https://share.streamlit.io), sign in, and point it at your repo's
    `app.py`. It will build from `requirements.txt` and give you a public URL.
-3. Add your OpenAI key as a Streamlit "Secret" (`OPENAI_API_KEY`) rather than typing it in each
-   time, if you want the deployed app pre-configured — or leave the sidebar field as-is for
+3. Add your OpenRouter key as a Streamlit "Secret" (`OPENROUTER_API_KEY`) rather than typing it in
+   each time, if you want the deployed app pre-configured — or leave the sidebar field as-is for
    users to bring their own key.
 
 ## Use cases covered
@@ -68,7 +74,7 @@ Enter your OpenAI API key in the sidebar, upload a file, type a question, click 
 ## Tech stack
 
 - **UI**: Streamlit
-- **Agent/LLM**: OpenAI GPT-4o-mini (swap for Anthropic/Gemini by editing the client init)
+- **Agent/LLM**: Free-tier model via OpenRouter (OpenAI-SDK compatible; swap provider/model by editing the client init)
 - **Code execution**: restricted `exec()` sandbox
 - **RAG**: live web search (DuckDuckGo HTML) restricted to official docs + TF-IDF reranking
 - **Data processing**: Pandas, NumPy, OpenPyXL
